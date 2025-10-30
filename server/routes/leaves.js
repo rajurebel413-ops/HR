@@ -188,17 +188,21 @@ router.delete('/:id', protect, async (req, res) => {
       return res.status(404).json({ message: 'Leave request not found' });
     }
 
-    // Only allow deletion of pending requests
-    if (leaveRequest.status !== 'Pending') {
+    // Only allow deletion of pending requests (unless admin/HR for cleanup)
+    if (leaveRequest.status !== 'Pending' && req.user.role !== 'Admin' && req.user.role !== 'HR') {
       return res.status(400).json({ message: 'Cannot delete approved or rejected leave requests' });
     }
 
-    // Update leave balance - remove from pending
+    // Update leave balance - remove from pending or used
     const leaveBalance = await LeaveBalance.findOne({ employeeId: leaveRequest.employeeId });
     if (leaveBalance) {
       const balanceItem = leaveBalance.balances.find(b => b.type === leaveRequest.leaveType);
       if (balanceItem) {
-        balanceItem.pending -= leaveRequest.days;
+        if (leaveRequest.status === 'Pending') {
+          balanceItem.pending -= leaveRequest.days;
+        } else if (leaveRequest.status === 'Approved') {
+          balanceItem.used -= leaveRequest.days;
+        }
         await leaveBalance.save();
       }
     }

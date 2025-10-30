@@ -38,14 +38,6 @@ const LeaveApplyForm: React.FC<LeaveApplyFormProps> = ({ onApplyLeave, leaveBala
       setError('End date cannot be before start date.');
       return;
     }
-    
-    const requestedDays = (new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 3600 * 24) + 1;
-    const availableDays = getRemainingDays(leaveType);
-
-    if(leaveType !== LeaveType.Unpaid && requestedDays > availableDays) {
-        setError(`Insufficient leave balance. You have ${availableDays} days of ${leaveType} remaining.`);
-        return;
-    }
 
     onApplyLeave({ leaveType, startDate, endDate, reason });
     
@@ -72,7 +64,7 @@ const LeaveApplyForm: React.FC<LeaveApplyFormProps> = ({ onApplyLeave, leaveBala
             onChange={(e) => setLeaveType(e.target.value as LeaveType)}
           >
             {Object.values(LeaveType).map(type => (
-                <option key={type} value={type}>{type} ({getRemainingDays(type)} days left)</option>
+                <option key={type} value={type}>{type}</option>
             ))}
           </Select>
         </div>

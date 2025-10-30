@@ -100,7 +100,7 @@ const EmployeesPage: React.FC<EmployeesPageProps> = ({ employees, setEmployees, 
         addToast({ type: 'success', message: 'Employee updated successfully!' });
       } else {
         console.log('➕ Creating employee:', employeeData);
-        const response = await employeeService.createEmployee(employeeData);
+        const response: any = await employeeService.createEmployee(employeeData);
         console.log('✅ Employee created response:', response);
         
         // Reload all employees to ensure sync
@@ -112,10 +112,10 @@ const EmployeesPage: React.FC<EmployeesPageProps> = ({ employees, setEmployees, 
         const newLeaveBalance: LeaveBalance = {
           employeeId: employeeData.id,
           balances: [
-              { type: LeaveType.Annual, total: 20, used: 0, pending: 0 },
-              { type: LeaveType.Sick, total: 10, used: 0, pending: 0 },
-              { type: LeaveType.Casual, total: 5, used: 0, pending: 0 },
-              { type: LeaveType.Unpaid, total: 99, used: 0, pending: 0 },
+              { type: LeaveType.Annual, total: 999, used: 0, pending: 0 },
+              { type: LeaveType.Sick, total: 999, used: 0, pending: 0 },
+              { type: LeaveType.Casual, total: 999, used: 0, pending: 0 },
+              { type: LeaveType.Unpaid, total: 999, used: 0, pending: 0 },
           ]
         };
         setLeaveBalances(prev => [...prev, newLeaveBalance]);

@@ -62,7 +62,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ user, onUpdateUser }) => {
 
 // Main component for forms
 const ProfileForms: React.FC<ProfilePageProps> = ({ user, onUpdateUser }) => {
-    const [activeTab, setActiveTab] = useState<'profile' | 'password' | 'security'>('profile');
+    const [activeTab, setActiveTab] = useState<'profile' | 'password'>('profile');
 
     return (
         <Card bodyClassName="p-0">
@@ -74,15 +74,11 @@ const ProfileForms: React.FC<ProfilePageProps> = ({ user, onUpdateUser }) => {
                      <button onClick={() => setActiveTab('password')} className={`py-4 px-1 border-b-2 font-medium text-base transition-colors ${activeTab === 'password' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}>
                         Change Password
                     </button>
-                    <button onClick={() => setActiveTab('security')} className={`py-4 px-1 border-b-2 font-medium text-base transition-colors ${activeTab === 'security' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}>
-                        Security & MFA
-                    </button>
                 </nav>
             </div>
              <div className="p-6">
               {activeTab === 'profile' && <ProfileInfoForm user={user} onUpdateUser={onUpdateUser} />}
               {activeTab === 'password' && <ChangePasswordForm />}
-              {activeTab === 'security' && <SecuritySettingsForm user={user} onUpdateUser={onUpdateUser} />}
             </div>
         </Card>
     );
@@ -165,98 +161,6 @@ const ChangePasswordForm: React.FC = () => {
                 <Button type="submit">Update Password</Button>
             </div>
         </form>
-    );
-};
-
-// Sub-component for security settings
-const SecuritySettingsForm: React.FC<{ user: User, onUpdateUser: (updatedUser: Partial<User>) => void }> = ({ user, onUpdateUser }) => {
-    const [isResetting, setIsResetting] = useState(false);
-    const { addToast } = useToast();
-    const { authService } = require('../../services/authService');
-
-    const handleResetMFA = async () => {
-        if (!confirm('Are you sure you want to reset your MFA setup? You will need to scan a new QR code on your next login.')) {
-            return;
-        }
-
-        try {
-            setIsResetting(true);
-            const response = await authService.resetMFA();
-            onUpdateUser({ isMfaSetup: false });
-            addToast({ type: 'success', message: response.message });
-        } catch (error: any) {
-            console.error('Failed to reset MFA:', error);
-            addToast({ type: 'error', message: error.response?.data?.message || 'Failed to reset MFA' });
-        } finally {
-            setIsResetting(false);
-        }
-    };
-
-    return (
-        <div className="space-y-6">
-            <div>
-                <h3 className="text-lg font-semibold mb-4">Multi-Factor Authentication (MFA)</h3>
-                <div className="bg-muted/50 rounded-lg p-6 space-y-4">
-                    <div className="flex items-start justify-between">
-                        <div className="flex items-start space-x-3">
-                            <div className="mt-1">
-                                <Icon name={user.isMfaSetup ? "shield" : "alert-triangle"} className={`w-6 h-6 ${user.isMfaSetup ? 'text-green-600' : 'text-amber-600'}`} />
-                            </div>
-                            <div>
-                                <p className="font-medium">
-                                    {user.isMfaSetup ? 'MFA is Enabled' : 'MFA is Not Set Up'}
-                                </p>
-                                <p className="text-sm text-muted-foreground mt-1">
-                                    {user.isMfaSetup 
-                                        ? 'Your account is protected with two-factor authentication using an authenticator app.'
-                                        : 'Set up MFA on your next login for enhanced security.'}
-                                </p>
-                            </div>
-                        </div>
-                        <div className={`px-3 py-1 rounded-full text-xs font-medium ${user.isMfaSetup ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
-                            {user.isMfaSetup ? 'Active' : 'Inactive'}
-                        </div>
-                    </div>
-
-                    {user.isMfaSetup && (
-                        <div className="pt-4 border-t border-border">
-                            <Button 
-                                type="button" 
-                                variant="destructive" 
-                                onClick={handleResetMFA}
-                                disabled={isResetting}
-                            >
-                                <Icon name="key" className="w-4 h-4 mr-2" />
-                                {isResetting ? 'Resetting...' : 'Reset MFA Setup'}
-                            </Button>
-                            <p className="text-xs text-muted-foreground mt-2">
-                                This will generate a new QR code. You'll need to scan it with your authenticator app on next login.
-                            </p>
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            <div>
-                <h3 className="text-lg font-semibold mb-4">Email Verification</h3>
-                <div className="bg-muted/50 rounded-lg p-6">
-                    <div className="flex items-start space-x-3">
-                        <div className="mt-1">
-                            <Icon name="mail" className="w-6 h-6 text-blue-600" />
-                        </div>
-                        <div>
-                            <p className="font-medium">Alternative Verification Method</p>
-                            <p className="text-sm text-muted-foreground mt-1">
-                                If you lose access to your authenticator app, you can use email verification as a backup method.
-                            </p>
-                            <p className="text-sm text-muted-foreground mt-2">
-                                <strong>Demo Mode:</strong> Use code <code className="bg-background px-2 py-1 rounded">123456</code> for testing.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
     );
 };
 

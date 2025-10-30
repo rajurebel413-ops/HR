@@ -56,14 +56,14 @@ const randomTime = (date: Date, startHour: number, endHour: number): Date => {
 const generatedAttendance: AttendanceRecord[] = [];
 const generatedLeaveRequests: LeaveRequest[] = [];
 
-// Per-employee leave balance generation
+// Per-employee leave balance generation (unlimited)
 export const initialLeaveBalances: LeaveBalance[] = mockEmployees.map(emp => ({
     employeeId: emp.id,
     balances: [
-        { type: LeaveType.Annual, total: 20, used: Math.floor(Math.random() * 5), pending: 0 },
-        { type: LeaveType.Sick, total: 10, used: Math.floor(Math.random() * 3), pending: 0 },
-        { type: LeaveType.Casual, total: 5, used: Math.floor(Math.random() * 2), pending: 0 },
-        { type: LeaveType.Unpaid, total: 99, used: 0, pending: 0 },
+        { type: LeaveType.Annual, total: 999, used: Math.floor(Math.random() * 5), pending: 0 },
+        { type: LeaveType.Sick, total: 999, used: Math.floor(Math.random() * 3), pending: 0 },
+        { type: LeaveType.Casual, total: 999, used: Math.floor(Math.random() * 2), pending: 0 },
+        { type: LeaveType.Unpaid, total: 999, used: 0, pending: 0 },
     ],
 }));
 

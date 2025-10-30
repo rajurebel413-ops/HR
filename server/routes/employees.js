@@ -108,14 +108,14 @@ router.post('/', protect, authorize('Admin', 'HR'), async (req, res) => {
       salary
     });
 
-    // Create default leave balance
+    // Create default leave balance (unlimited)
     await LeaveBalance.create({
       employeeId: employee._id,
       balances: [
-        { type: 'Annual', total: 20, used: 0, pending: 0 },
-        { type: 'Sick', total: 10, used: 0, pending: 0 },
-        { type: 'Casual', total: 12, used: 0, pending: 0 },
-        { type: 'Unpaid', total: 99, used: 0, pending: 0 }
+        { type: 'Annual', total: 999, used: 0, pending: 0 },
+        { type: 'Sick', total: 999, used: 0, pending: 0 },
+        { type: 'Casual', total: 999, used: 0, pending: 0 },
+        { type: 'Unpaid', total: 999, used: 0, pending: 0 }
       ]
     });
 

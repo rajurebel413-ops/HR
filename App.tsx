@@ -69,6 +69,82 @@ const AppContent: React.FC = () => {
 
   const { addToast } = useToast();
 
+  // Load data from API when authenticated
+  useEffect(() => {
+    const loadDataFromAPI = async () => {
+      if (authState !== 'authenticated') return;
+
+      try {
+        console.log('🔄 Loading data from API...');
+        const { employeeService } = await import('./services/employeeService');
+        const { departmentService } = await import('./services/departmentService');
+        const { leaveService } = await import('./services/leaveService');
+        const { attendanceService } = await import('./services/attendanceService');
+
+        // Load all data in parallel
+        const [employeesData, departmentsData, leavesData, attendanceData] = await Promise.all([
+          employeeService.getAllEmployees().catch(() => employees),
+          departmentService.getAllDepartments().catch(() => departments),
+          leaveService.getAllLeaveRequests().catch(() => leaveRequests),
+          attendanceService.getAllAttendance().catch(() => attendanceRecords)
+        ]);
+
+        console.log('✅ Data loaded:', {
+          employees: employeesData.length,
+          departments: departmentsData.length,
+          leaves: leavesData.length,
+          attendance: attendanceData.length
+        });
+
+        setEmployees(employeesData);
+        setDepartments(departmentsData);
+        setLeaveRequests(leavesData);
+        setAttendanceRecords(attendanceData);
+      } catch (error) {
+        console.error('❌ Failed to load data from API:', error);
+      }
+    };
+
+    loadDataFromAPI();
+  }, [authState]);
+
+  // Auto-refresh data every 30 seconds when authenticated
+  useEffect(() => {
+    if (authState !== 'authenticated') return;
+
+    const refreshInterval = setInterval(async () => {
+      try {
+        console.log('🔄 Auto-refreshing data...');
+        const { employeeService } = await import('./services/employeeService');
+        const { departmentService } = await import('./services/departmentService');
+        const { leaveService } = await import('./services/leaveService');
+        const { attendanceService } = await import('./services/attendanceService');
+
+        const [employeesData, departmentsData, leavesData, attendanceData] = await Promise.all([
+          employeeService.getAllEmployees().catch(() => employees),
+          departmentService.getAllDepartments().catch(() => departments),
+          leaveService.getAllLeaveRequests().catch(() => leaveRequests),
+          attendanceService.getAllAttendance().catch(() => attendanceRecords)
+        ]);
+
+        setEmployees(employeesData);
+        setDepartments(departmentsData);
+        setLeaveRequests(leavesData);
+        setAttendanceRecords(attendanceData);
+        console.log('✅ Auto-refresh complete:', {
+          employees: employeesData.length,
+          departments: departmentsData.length,
+          leaves: leavesData.length,
+          attendance: attendanceData.length
+        });
+      } catch (error) {
+        console.error('❌ Auto-refresh failed:', error);
+      }
+    }, 10000); // Refresh every 10 seconds for real-time updates
+
+    return () => clearInterval(refreshInterval);
+  }, [authState]);
+
   const addNotification = useCallback((notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => {
     const newNotification: Notification = {
         ...notification,

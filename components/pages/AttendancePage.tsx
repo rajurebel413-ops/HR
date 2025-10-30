@@ -1,10 +1,12 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { AttendanceRecord, AttendanceStatus, User, UserRole, Employee, Department } from '../../types';
 import Card from '../common/Card';
 import Input from '../common/Input';
 import Select from '../common/Select';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '../common/Table';
+import { attendanceService } from '../../services/attendanceService';
+import { useToast } from '../../hooks/useToast';
 
 const StatusBadge: React.FC<{ status: AttendanceStatus }> = ({ status }) => {
   const statusClasses: Record<AttendanceStatus, string> = {
@@ -42,8 +44,31 @@ const AttendancePage: React.FC<AttendancePageProps> = ({ user, records, setRecor
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
   
+  const [isLoading, setIsLoading] = useState(false);
+  const { addToast } = useToast();
+  
   const isEmployeeView = user.role === UserRole.Employee;
   const canEdit = user.role === UserRole.Admin || user.role === UserRole.HR;
+
+  // Load attendance data from API on mount and refresh every 10 seconds
+  useEffect(() => {
+    const loadAttendanceData = async () => {
+      try {
+        console.log('🔄 Loading attendance data from API...');
+        const attendanceData = await attendanceService.getAllAttendance();
+        setRecords(attendanceData);
+        console.log('✅ Attendance data loaded:', attendanceData.length, 'records');
+      } catch (error: any) {
+        console.error('❌ Failed to load attendance data:', error);
+      }
+    };
+
+    loadAttendanceData();
+
+    // Auto-refresh every 10 seconds
+    const interval = setInterval(loadAttendanceData, 10000);
+    return () => clearInterval(interval);
+  }, [setRecords]);
 
   // For managers, filter departments they manage. For others, show all.
   const viewableDepartments = useMemo(() => {
@@ -96,24 +121,51 @@ const AttendancePage: React.FC<AttendancePageProps> = ({ user, records, setRecor
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [records, user.id, selectedMonth, selectedYear, isEmployeeView]);
 
-  const handleStatusChange = (employeeId: string, newStatus: AttendanceStatus) => {
+  const handleStatusChange = async (employeeId: string, newStatus: AttendanceStatus) => {
     if (!canEdit) return;
-    setRecords(prev => {
-        const existingRecordIndex = prev.findIndex(a => a.employeeId === employeeId && a.date === selectedDate);
-        if (existingRecordIndex > -1) {
-            const updated = [...prev];
-            updated[existingRecordIndex].status = newStatus;
-            if (newStatus === AttendanceStatus.Present && !updated[existingRecordIndex].clockIn) {
-                 updated[existingRecordIndex].clockIn = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-            }
-            return updated;
-        } else {
-            return [...prev, {
-                id: `att-${Date.now()}`, employeeId, date: selectedDate, status: newStatus,
-                clockIn: newStatus === AttendanceStatus.Present ? new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : undefined,
-            }];
-        }
-    });
+    
+    try {
+      setIsLoading(true);
+      const existingRecord = records.find(a => a.employeeId === employeeId && a.date === selectedDate);
+      
+      if (existingRecord) {
+        // Update existing record via API
+        const updatedRecord = await attendanceService.updateAttendanceRecord(existingRecord.id, {
+          status: newStatus,
+          clockIn: newStatus === AttendanceStatus.Present && !existingRecord.clockIn 
+            ? new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+            : existingRecord.clockIn
+        });
+        
+        // Update local state
+        setRecords(prev => prev.map(r => r.id === updatedRecord.id ? updatedRecord : r));
+        addToast({ type: 'success', message: 'Attendance updated successfully' });
+      } else {
+        // Create new record via API
+        const newRecord = await attendanceService.createAttendanceRecord({
+          employeeId,
+          date: selectedDate,
+          status: newStatus,
+          clockIn: newStatus === AttendanceStatus.Present 
+            ? new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+            : undefined
+        });
+        
+        // Update local state
+        setRecords(prev => [...prev, newRecord]);
+        addToast({ type: 'success', message: 'Attendance marked successfully' });
+      }
+      
+      // Reload all attendance data to ensure sync
+      const allAttendance = await attendanceService.getAllAttendance();
+      setRecords(allAttendance);
+      
+    } catch (error: any) {
+      console.error('❌ Failed to update attendance:', error);
+      addToast({ type: 'error', message: error.response?.data?.message || 'Failed to update attendance' });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

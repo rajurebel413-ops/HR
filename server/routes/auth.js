@@ -144,13 +144,20 @@ router.post('/mfa/verify', async (req, res) => {
       return res.status(400).json({ message: 'MFA not set up for this user' });
     }
 
-    // Verify token
-    const verified = speakeasy.totp.verify({
-      secret: user.mfaSecret,
-      encoding: 'base32',
-      token: token,
-      window: 2
-    });
+    // Development bypass: accept "123456" as a valid code
+    let verified = false;
+    if (process.env.NODE_ENV === 'development' && token === '123456') {
+      console.log('⚠️ Development MFA bypass code used for', user.email);
+      verified = true;
+    } else {
+      // Verify token
+      verified = speakeasy.totp.verify({
+        secret: user.mfaSecret,
+        encoding: 'base32',
+        token: token,
+        window: 2
+      });
+    }
 
     if (!verified) {
       return res.status(401).json({ message: 'Invalid MFA token' });

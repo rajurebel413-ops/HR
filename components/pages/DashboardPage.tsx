@@ -117,10 +117,10 @@ const AdminDashboard: React.FC<DashboardPageProps> = ({ user, employees, departm
 
         loadDashboardData();
         
-        // Refresh data every 5 minutes
-        const interval = setInterval(loadDashboardData, 5 * 60 * 1000);
+        // Refresh data every 10 seconds for real-time updates
+        const interval = setInterval(loadDashboardData, 10 * 1000);
         return () => clearInterval(interval);
-    }, [employees, departments, leaveRequests, attendanceRecords]);
+    }, []); // Empty dependency array - only load once and use interval for updates
 
     const activeEmployees = apiEmployees.filter(e => e.status === EmployeeStatus.Active).length;
     const pendingLeaves = apiLeaveRequests.filter(lr => lr.status === LeaveStatus.Pending).length;

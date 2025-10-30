@@ -151,15 +151,15 @@ const seedDatabase = async () => {
     ]);
 
     console.log('Creating leave balances...');
-    // Create leave balances for all employees
+    // Create leave balances for all employees (unlimited)
     const leaveBalances = await LeaveBalance.create(
       employees.map(emp => ({
         employeeId: emp._id,
         balances: [
-          { type: 'Annual', total: 20, used: Math.floor(Math.random() * 5), pending: 0 },
-          { type: 'Sick', total: 10, used: Math.floor(Math.random() * 3), pending: 0 },
-          { type: 'Casual', total: 5, used: Math.floor(Math.random() * 2), pending: 0 },
-          { type: 'Unpaid', total: 99, used: 0, pending: 0 }
+          { type: 'Annual', total: 999, used: Math.floor(Math.random() * 5), pending: 0 },
+          { type: 'Sick', total: 999, used: Math.floor(Math.random() * 3), pending: 0 },
+          { type: 'Casual', total: 999, used: Math.floor(Math.random() * 2), pending: 0 },
+          { type: 'Unpaid', total: 999, used: 0, pending: 0 }
         ]
       }))
     );

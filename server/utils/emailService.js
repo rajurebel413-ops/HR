@@ -159,6 +159,17 @@ export const sendPayrollGeneratedEmail = async (email, name, month, year, netPay
 // Send new employee welcome email
 export const sendWelcomeEmail = async (email, name, employeeId, tempPassword) => {
   try {
+    // Check if real email is enabled
+    const enableRealEmail = process.env.ENABLE_REAL_EMAIL === 'true';
+    
+    if (!enableRealEmail) {
+      console.log('📧 Demo Mode: Welcome email not sent');
+      console.log('   Employee:', name);
+      console.log('   Email:', email);
+      console.log('   Password:', tempPassword);
+      return true; // Return true so employee creation continues
+    }
+
     const transporter = createTransporter();
     
     const loginUrl = `${process.env.FRONTEND_URL}/login`;
@@ -191,7 +202,8 @@ export const sendWelcomeEmail = async (email, name, employeeId, tempPassword) =>
     return true;
   } catch (error) {
     console.error('Error sending welcome email:', error);
-    return false;
+    console.log('⚠️ Email sending failed, but continuing...');
+    return true; // Return true so employee creation continues
   }
 };
 
