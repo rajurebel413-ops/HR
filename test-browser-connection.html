@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Browser Connection Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <h1>HR Management System - Connection Test</h1>
+    <div id="results"></div>
+    <button onclick="testLogin()">Test Login</button>
+    
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+        const results = document.getElementById('results');
+        
+        function addResult(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.textContent = message;
+            results.appendChild(div);
+            console.log(message);
+        }
+        
+        async function testConnection() {
+            addResult('🔍 Testing connection to backend...', 'info');
+            
+            try {
+                // Test 1: Health check
+                const healthResponse = await fetch(`${API_BASE}/health`);
+                if (healthResponse.ok) {
+                    const healthData = await healthResponse.json();
+                    addResult('✅ Backend health check: ' + healthData.message, 'success');
+                } else {
+                    addResult('❌ Backend health check failed: ' + healthResponse.status, 'error');
+                    return;
+                }
+                
+                addResult('🎉 Backend is reachable from browser!', 'success');
+                
+            } catch (error) {
+                addResult('❌ Connection failed: ' + error.message, 'error');
+            }
+        }
+        
+        async function testLogin() {
+            addResult('🔑 Testing login...', 'info');
+            
+            try {
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        email: 'admin@hrms.com',
+                        password: 'password123'
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult('✅ Login successful: ' + data.user.name, 'success');
+                    addResult('📧 Email: ' + data.user.email, 'info');
+                    addResult('🔐 MFA Setup: ' + data.user.isMfaSetup, 'info');
+                } else {
+                    const errorData = await response.json();
+                    addResult('❌ Login failed: ' + errorData.message, 'error');
+                }
+                
+            } catch (error) {
+                addResult('❌ Login request failed: ' + error.message, 'error');
+            }
+        }
+        
+        // Auto-run connection test
+        testConnection();
+    </script>
+</body>
+</html>

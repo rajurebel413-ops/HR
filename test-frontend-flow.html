@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Frontend API Test</title>
+</head>
+<body>
+    <h1>Frontend API Connection Test</h1>
+    <div id="results"></div>
+    
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+        const results = document.getElementById('results');
+        
+        function log(message) {
+            results.innerHTML += '<p>' + message + '</p>';
+            console.log(message);
+        }
+        
+        async function testFrontendFlow() {
+            try {
+                log('🔍 Testing frontend API connection...');
+                
+                // Test 1: Health check
+                log('1. Testing API health...');
+                const healthResponse = await fetch(`${API_BASE}/health`);
+                const healthData = await healthResponse.json();
+                log('✅ API Health: ' + healthData.message);
+                
+                // Test 2: Login
+                log('2. Testing login...');
+                const loginResponse = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: 'admin@hrms.com',
+                        password: 'password123'
+                    })
+                });
+                
+                if (!loginResponse.ok) {
+                    throw new Error('Login failed: ' + loginResponse.status);
+                }
+                
+                const loginData = await loginResponse.json();
+                log('✅ Login successful: ' + loginData.user.name);
+                log('🔐 MFA Setup: ' + loginData.user.isMfaSetup);
+                
+                // Test 3: Try to get departments (should fail without auth)
+                log('3. Testing departments endpoint (should fail without auth)...');
+                const deptResponse = await fetch(`${API_BASE}/departments`);
+                
+                if (deptResponse.status === 401) {
+                    log('✅ Authentication required (expected)');
+                } else {
+                    log('❌ Unexpected response: ' + deptResponse.status);
+                }
+                
+                log('🎉 Frontend can successfully connect to backend!');
+                log('💡 Next step: Complete MFA flow in the actual application');
+                
+            } catch (error) {
+                log('❌ Error: ' + error.message);
+            }
+        }
+        
+        // Run the test
+        testFrontendFlow();
+    </script>
+</body>
+</html>
